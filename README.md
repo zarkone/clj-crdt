@@ -1,14 +1,9 @@
 # crdt
 
-A Clojure library designed to ... well, that part is up to you.
+LWW set simple implementation.
 
 ## Usage
 
-FIXME
-
-## License
-
-Copyright © 2018 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+- Code located in `src`.
+- To run tests, run `./lein test` in project root.
+  (It will download leiningen (only once) and evaluate all tests from `test` directory.)
