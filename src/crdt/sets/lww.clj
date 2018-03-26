@@ -5,10 +5,10 @@
 
 (def now #(System/currentTimeMillis))
 
-(defn create-lww-element-set-atom
+(defn create-lww-element-set
   "Creates LWW init object"
   []
-  (atom {:add {}, :rem {}}))
+  {:add {}, :rem {}})
 
 
 (defn lookup
@@ -23,19 +23,22 @@
 
 (defn add
   "Adds object to set. If no `timestamp` set, uses current time"
-  ([*lww-set element] (add *lww-set element (now)))
-  ([*lww-set element timestamp]
-   (swap! *lww-set update :add
-          core/merge {element timestamp})))
+  ([lww-set element] (add lww-set element (now)))
+  ([lww-set element timestamp]
+   (println "Add ::: "[lww-set element timestamp])
+   (update lww-set :add
+           core/merge {element timestamp})))
 
 
 (defn remove
   "Removes object from set. If no `timestamp` set, uses current time"
-  ([*lww-set element] (remove *lww-set element (now)))
-  ([*lww-set element timestamp]
-   (when (lookup @*lww-set element)
-     (swap! *lww-set update :rem
-            core/merge {element timestamp}))))
+  ([lww-set element] (remove lww-set element (now)))
+  ([lww-set element timestamp]
+   (println "Rem ::: "[lww-set element timestamp])
+   (if (lookup lww-set element)
+     (update lww-set :rem
+             core/merge {element timestamp})
+     lww-set)))
 
 
 (defn compare
@@ -57,11 +60,12 @@
 (defn merge
   "Merges `lww-set1` and `lww-set2` LWW sets according to theory rules"
   [lww-set1 lww-set2]
-  {:add (merge-elements-map (:add lww-set1) (:add lww-set2))
-   :rem (merge-elements-map (:rem lww-set1) (:rem lww-set2))})
+  (-> lww-set1
+      (update :add #(merge-elements-map % (:add lww-set2)))
+      (update :rem #(merge-elements-map % (:rem lww-set2)))))
 
 
-(defn lww->set
+(defn to-set
   "Returns current (actual) items of LWW set `lww-set` as Clojure set"
   [lww-set]
   (->> (get lww-set :add)
@@ -71,5 +75,5 @@
 
 
 (defn empty? [lww-set]
-  (-> (lww->set lww-set)
+  (-> (to-set lww-set)
       (clojure.core/empty?)))
