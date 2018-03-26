@@ -124,8 +124,33 @@
           #{:foo :baz2 :wbar})))))
 
 
-;; (deftest compare-sets)
-
-;; (deftest merge-sets)
-
-;; generative testing?
+(deftest merge-sets
+  (testing "Do random lww-set add/remove and compare results with Clojure set"
+    (let [simple-set (atom #{})
+          lww-sets-count 42
+          lww-sets-atom (->> (repeatedly lww-sets-count lww/create-lww-element-set)
+                             (vec)
+                             (atom))]
+      (doseq [_ (range 100)]
+        (let [operation (if (even? (rand-int 10000)) :add :rem)
+              operand (if (= :add operation)
+                        (rand)
+                        (second @simple-set))]
+          (case operation
+            :add (do
+                   (swap! simple-set conj operand)
+                   (swap! lww-sets-atom
+                          update-in [(rand-int lww-sets-count)]
+                          #(lww/add % operand)))
+            :rem (do
+                   (swap! simple-set disj operand)
+                   (swap! lww-sets-atom
+                          (fn [lww-sets]
+                            (->> lww-sets
+                                 (map #(lww/remove % operand))
+                                 (vec))))))))
+      (is
+       (= @simple-set
+          (->> @lww-sets-atom
+               (reduce lww/merge)
+               (lww/to-set)))))))
