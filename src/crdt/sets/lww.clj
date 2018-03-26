@@ -8,72 +8,68 @@
 (defn create-lww-element-set-atom
   "Creates LWW init object"
   []
-  (atom {:a {}, :r {}}))
+  (atom {:add {}, :rem {}}))
 
 
 (defn lookup
   "Seeks for the element in `s` and returns timestamp if found"
-  [s e]
-  (when-let [at (-> s :a (get e))]
-    (if-let [rt (-> s :r (get e))]
-      (when (< rt at)
-        at)
-      at)))
+  [lww-set element]
+  (when-let [add-timestamp (get-in lww-set [:add element]) ]
+    (if-let [rem-timestamp (get-in lww-set [:rem element])]
+      (when (< rem-timestamp add-timestamp)
+        add-timestamp)
+      add-timestamp)))
 
 
 (defn add
   "Adds object to set. If no `timestamp` set, uses current time"
-  ([*s e] (add *s e (now)))
-  ([*s e timestamp]
-   (swap! *s update :a
-          core/merge {e timestamp})))
+  ([*lww-set element] (add *lww-set element (now)))
+  ([*lww-set element timestamp]
+   (swap! *lww-set update :add
+          core/merge {element timestamp})))
 
 
 (defn remove
   "Removes object from set. If no `timestamp` set, uses current time"
-  ([*s e] (remove *s e (now)))
-  ([*s e timestamp]
-   (when (lookup @*s e)
-     (swap! *s update :r
-            core/merge {e timestamp}))))
+  ([*lww-set element] (remove *lww-set element (now)))
+  ([*lww-set element timestamp]
+   (when (lookup @*lww-set element)
+     (swap! *lww-set update :rem
+            core/merge {element timestamp}))))
 
 
 (defn compare
-  "Compares `s` and `t` LWW sets according to theory rules"
-  [s t]
-  (let [{sa :a sr :r} s
-        {ta :a tr :r} t]
-    ;; why or..?
-    (or (set/subset? (set sa) (set ta))
-        (set/subset? (set ta) (set tr)))))
+  "Compares `lww-set1` and `lww-set2` LWW sets according to theory rules"
+  [lww-set1 lww-set2]
+  (let [{lww-set1:add :add, lww-set1:rem :rem} lww-set1
+        {lww-set2:add :add, lww-set2:rem :rem} lww-set2]
+    (or (set/subset? (set lww-set1:add) (set lww-set2:add))
+        (set/subset? (set lww-set1:rem) (set lww-set2:rem)))))
 
 
-(defn- max-timestamp-reducer [result [element timestamp]]
-  (merge-with #(if (> %1 %2) %1 %2)
-              result {element timestamp}))
-
-
-(defn- merge-elements-map [m1 m2]
-  (->> (set m1)
-       (set/union (set m2))
-       (reduce max-timestamp-reducer {})))
+(defn- merge-elements-map [map1 map2]
+  (->> (set map1)
+       (set/union (set map2))
+       (reduce (fn [result [element timestamp]]
+                 (merge-with max result {element timestamp})))))
 
 
 (defn merge
-  "Merges `s` and `t` LWW sets according to theory rules"
-  [s t]
-  {:a (merge-elements-map (:a s) (:a t))
-   :r (merge-elements-map (:r s) (:r t))})
+  "Merges `lww-set1` and `lww-set2` LWW sets according to theory rules"
+  [lww-set1 lww-set2]
+  {:add (merge-elements-map (:add lww-set1) (:add lww-set2))
+   :rem (merge-elements-map (:rem lww-set1) (:rem lww-set2))})
 
 
 (defn lww->set
-  "Returns current (actual) items of LWW set `s` as Clojure set"
-  [s]
-  (->> (get s :a)
+  "Returns current (actual) items of LWW set `lww-set` as Clojure set"
+  [lww-set]
+  (->> (get lww-set :add)
        (keys)
-       (filter #(lookup s %))
+       (filter #(lookup lww-set %))
        (set)))
 
-(defn empty? [s]
-  (-> (lww->set s)
+
+(defn empty? [lww-set]
+  (-> (lww->set lww-set)
       (clojure.core/empty?)))
