@@ -1,6 +1,9 @@
 (ns crdt.sets.lww
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set]
+            [clojure.core :as core]
+            [crdt.sets.lww :as lww]))
 
+(def now #(System/currentTimeMillis))
 
 (defn create-lww-element-set-atom
   "Creates LWW init object"
@@ -20,23 +23,25 @@
 
 (defn add
   "Adds object to set. If no `timestamp` set, uses current time"
-  ([*s e] (add *s e (System/currentTimeMillis)))
+  ([*s e] (add *s e (now)))
   ([*s e timestamp]
    (when-not (lookup @*s e)
      (swap! *s update :a
-            merge {e timestamp}))))
+            core/merge {e timestamp}))))
 
 
 (defn remove
   "Removes object from set. If no `timestamp` set, uses current time"
-  ([*s e] (remove *s e (System/currentTimeMillis)))
+  ([*s e] (remove *s e (now)))
   ([*s e timestamp]
    (when (lookup @*s e)
      (swap! *s update :r
-            merge {e timestamp}))))
+            core/merge {e timestamp}))))
 
 
-(defn compare [s t]
+(defn compare
+  "Compares `s` and `t` LWW sets according to theory rules"
+  [s t]
   (let [{sa :a sr :r} s
         {ta :a tr :r} t]
     ;; why or..?
