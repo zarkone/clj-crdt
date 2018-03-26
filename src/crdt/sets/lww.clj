@@ -25,9 +25,8 @@
   "Adds object to set. If no `timestamp` set, uses current time"
   ([*s e] (add *s e (now)))
   ([*s e timestamp]
-   (when-not (lookup @*s e)
-     (swap! *s update :a
-            core/merge {e timestamp}))))
+   (swap! *s update :a
+          core/merge {e timestamp})))
 
 
 (defn remove
