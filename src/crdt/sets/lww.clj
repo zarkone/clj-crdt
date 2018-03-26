@@ -6,10 +6,6 @@
   (atom {:a {}, :r {}}))
 
 
-(defn create-element [e]
-  {e (System/currentTimeMillis)})
-
-
 (defn lookup [s e]
   (when-let [at (-> s :a (get e))]
     (if-let [rt (-> s :r (get e))]
@@ -17,16 +13,20 @@
       true)))
 
 
-(defn add [*s e]
-  (when-not (lookup @*s e)
-    (swap! *s update :a
-           merge (create-element e))))
+(defn add
+  ([*s e] (add *s e (System/currentTimeMillis)))
+  ([*s e timestamp]
+   (when-not (lookup @*s e)
+     (swap! *s update :a
+            merge {e timestamp}))))
 
 
-(defn remove [*s e]
-  (when (lookup @*s e)
-    (swap! *s update :r
-           merge (create-element e))))
+(defn remove
+  ([*s e] (remove *s e (System/currentTimeMillis)))
+  ([*s e timestamp]
+   (when (lookup @*s e)
+     (swap! *s update :r
+            merge {e timestamp}))))
 
 
 (defn compare [s t]
