@@ -65,6 +65,16 @@
        (= #{:exist} (lww/lww->set @s))))
     ))
 
+(deftest double-add
+  (testing "Remove element from set multiple times"
+    (let [s (lww/create-lww-element-set-atom)]
+      (lww/add s :foo)
+      (lww/remove s :foo)
+      (lww/add s :foo)
+      (is
+       (lww/lookup @s :foo)))
+    ))
+
 (deftest lookup-removed
   (testing "Lookup removed item"
     (let [s (lww/create-lww-element-set-atom)]
