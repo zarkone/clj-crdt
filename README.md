@@ -1,6 +1,10 @@
-# crdt
+# LWW-element-set
 
-LWW set simple implementation.
+LWW-element-set simple implementation.
+
+Please, refer to implementation details and operation names to CRDT paper:
+[https://hal.inria.fr/inria-00555588/PDF/techreport.pdf](https://hal.inria.fr/inria-00555588/PDF/techreport.pdf)
+
 
 ## Usage
 
