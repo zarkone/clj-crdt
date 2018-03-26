@@ -39,11 +39,68 @@
        (not (lww/lookup @s :foo))))
     ))
 
+(deftest empty
+  (testing "Create set and test if it empty"
+    (let [s (lww/create-lww-element-set-atom)]
+      (is
+       (not (lww/lookup @s :foo))))
+    ))
+
+(deftest remove-empty
+  (testing "Remove item from empty set"
+    (let [s (lww/create-lww-element-set-atom)]
+      (lww/remove s :doesnt-exist)
+      (is
+       (lww/empty? @s)))
+    ))
+
+(deftest double-remove
+  (testing "Remove element from set multiple times"
+    (let [s (lww/create-lww-element-set-atom)]
+      (lww/add s :doesnt-exist)
+      (lww/add s :exist)
+      (lww/remove s :doesnt-exist)
+      (lww/remove s :doesnt-exist)
+      (is
+       (= #{:exist} (lww/lww->set @s))))
+    ))
+
 (deftest lookup-removed
   (testing "Lookup removed item"
     (let [s (lww/create-lww-element-set-atom)]
       (lww/add s :foo)
       (lww/remove s :foo)
       (is
-       (not (lww/lookup @s :foo))))
+       (not (lww/lookup @s :foo)))
+      )))
+
+(deftest lookup-removed
+  (testing "Lookup removed item"
+    (let [s (lww/create-lww-element-set-atom)]
+      (lww/add s :foo)
+      (lww/remove s :foo)
+      (lww/add s :foo)
+      (is
+       (lww/lookup @s :foo)))
     ))
+
+(deftest lww-to-set-convert
+  (testing "Converting to basic set"
+    (let [s (lww/create-lww-element-set-atom)]
+      (lww/add s :foo)
+      (lww/remove s :foo)
+      (lww/add s :foo)
+      (lww/add s :wbar)
+      (lww/add s :baz)
+      (lww/add s :baz2)
+      (lww/remove s :baz)
+      (is
+       (= (lww/lww->set @s)
+          #{:foo :baz2 :wbar})))))
+
+
+;; (deftest compare-sets)
+
+;; (deftest merge-sets)
+
+;; generative testing?

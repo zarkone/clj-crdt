@@ -54,12 +54,27 @@
               result {element timestamp}))
 
 
-(defn merge-elements-map [m1 m2]
+(defn- merge-elements-map [m1 m2]
   (->> (set m1)
        (set/union (set m2))
        (reduce max-timestamp-reducer {})))
 
 
-(defn merge [s t]
+(defn merge
+  "Merges `s` and `t` LWW sets according to theory rules"
+  [s t]
   {:a (merge-elements-map (:a s) (:a t))
    :r (merge-elements-map (:r s) (:r t))})
+
+
+(defn lww->set
+  "Returns current (actual) items of LWW set `s` as Clojure set"
+  [s]
+  (->> (get s :a)
+       (keys)
+       (filter #(lookup s %))
+       (set)))
+
+(defn empty? [s]
+  (-> (lww->set s)
+      (clojure.core/empty?)))
