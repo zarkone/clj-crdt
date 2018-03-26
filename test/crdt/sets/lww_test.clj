@@ -26,86 +26,101 @@
 
 (deftest simple-add
   (testing "Simple add"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :foo)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set lww/add :foo)
       (is
-       (lww/lookup @s :foo)))
+       (lww/lookup @lww-set :foo)))
     ))
 
 (deftest lookup-empty
   (testing "Lookup in empty set"
-    (let [s (lww/create-lww-element-set-atom)]
+    (let [lww-set (atom (lww/create-lww-element-set))]
       (is
-       (not (lww/lookup @s :foo))))
+       (not (lww/lookup @lww-set :foo))))
     ))
 
 (deftest empty
   (testing "Create set and test if it empty"
-    (let [s (lww/create-lww-element-set-atom)]
+    (let [lww-set (atom (lww/create-lww-element-set))]
       (is
-       (not (lww/lookup @s :foo))))
+       (not (lww/lookup @lww-set :foo))))
     ))
 
 (deftest remove-empty
   (testing "Remove item from empty set"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/remove s :doesnt-exist)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set lww/remove :doesnt-exist)
       (is
-       (lww/empty? @s)))
+       (lww/empty? @lww-set)))
     ))
 
 (deftest double-remove
   (testing "Remove element from set multiple times"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :doesnt-exist)
-      (lww/add s :exist)
-      (lww/remove s :doesnt-exist)
-      (lww/remove s :doesnt-exist)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set
+             #(-> %
+                  (lww/add :doesnt-exist)
+                  (lww/add :exist)
+                  (lww/remove :doesnt-exist)
+                  (lww/remove :doesnt-exist)
+                  ))
       (is
-       (= #{:exist} (lww/lww->set @s))))
+       (= #{:exist} (lww/to-set @lww-set))))
     ))
 
 (deftest double-add
   (testing "Remove element from set multiple times"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :foo)
-      (lww/remove s :foo)
-      (lww/add s :foo)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set
+             #(-> %
+                  (lww/add :foo)
+                  (lww/remove :foo)
+                  (lww/add :foo)
+                  ))
       (is
-       (lww/lookup @s :foo)))
+       (lww/lookup @lww-set :foo)))
     ))
 
 (deftest lookup-removed
   (testing "Lookup removed item"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :foo)
-      (lww/remove s :foo)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set
+             #(-> %
+                  (lww/add :foo)
+                  (lww/remove :foo)
+                  ))
       (is
-       (not (lww/lookup @s :foo)))
+       (not (lww/lookup @lww-set :foo)))
       )))
 
 (deftest lookup-removed
   (testing "Lookup removed item"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :foo)
-      (lww/remove s :foo)
-      (lww/add s :foo)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set
+             #(-> %
+                  (lww/add :foo)
+                  (lww/remove :foo)
+                  (lww/add :foo)
+                  ))
       (is
-       (lww/lookup @s :foo)))
+       (lww/lookup @lww-set :foo)))
     ))
 
 (deftest lww-to-set-convert
   (testing "Converting to basic set"
-    (let [s (lww/create-lww-element-set-atom)]
-      (lww/add s :foo)
-      (lww/remove s :foo)
-      (lww/add s :foo)
-      (lww/add s :wbar)
-      (lww/add s :baz)
-      (lww/add s :baz2)
-      (lww/remove s :baz)
+    (let [lww-set (atom (lww/create-lww-element-set))]
+      (swap! lww-set
+             #(-> %
+                  (lww/add :foo)
+                  (lww/remove :foo)
+                  (lww/add :foo)
+                  (lww/add :wbar)
+                  (lww/add :baz)
+                  (lww/add :baz2)
+                  (lww/remove :baz)
+                  ))
       (is
-       (= (lww/lww->set @s)
+       (= (lww/to-set @lww-set)
           #{:foo :baz2 :wbar})))))
 
 
