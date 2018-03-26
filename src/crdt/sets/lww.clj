@@ -25,7 +25,6 @@
   "Adds object to set. If no `timestamp` set, uses current time"
   ([lww-set element] (add lww-set element (now)))
   ([lww-set element timestamp]
-   (println "Add ::: "[lww-set element timestamp])
    (update lww-set :add
            core/merge {element timestamp})))
 
@@ -34,7 +33,6 @@
   "Removes object from set. If no `timestamp` set, uses current time"
   ([lww-set element] (remove lww-set element (now)))
   ([lww-set element timestamp]
-   (println "Rem ::: "[lww-set element timestamp])
    (if (lookup lww-set element)
      (update lww-set :rem
              core/merge {element timestamp})
@@ -49,12 +47,11 @@
     (or (set/subset? (set lww-set1:add) (set lww-set2:add))
         (set/subset? (set lww-set1:rem) (set lww-set2:rem)))))
 
-
 (defn- merge-elements-map [map1 map2]
   (->> (set map1)
        (set/union (set map2))
        (reduce (fn [result [element timestamp]]
-                 (merge-with max result {element timestamp})))))
+                 (merge-with max result {element timestamp})) {})))
 
 
 (defn merge
