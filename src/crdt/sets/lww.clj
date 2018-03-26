@@ -2,18 +2,24 @@
   (:require [clojure.set :as set]))
 
 
-(defn create-lww-element-set-atom []
+(defn create-lww-element-set-atom
+  "Creates LWW init object"
+  []
   (atom {:a {}, :r {}}))
 
 
-(defn lookup [s e]
+(defn lookup
+  "Seeks for the element in `s` and returns timestamp if found"
+  [s e]
   (when-let [at (-> s :a (get e))]
     (if-let [rt (-> s :r (get e))]
-      (< rt at)
-      true)))
+      (when (< rt at)
+        at)
+      at)))
 
 
 (defn add
+  "Adds object to set. If no `timestamp` set, uses current time"
   ([*s e] (add *s e (System/currentTimeMillis)))
   ([*s e timestamp]
    (when-not (lookup @*s e)
@@ -22,6 +28,7 @@
 
 
 (defn remove
+  "Removes object from set. If no `timestamp` set, uses current time"
   ([*s e] (remove *s e (System/currentTimeMillis)))
   ([*s e timestamp]
    (when (lookup @*s e)
@@ -42,12 +49,12 @@
               result {element timestamp}))
 
 
-(defn merge-element-timestamp-map [m1 m2]
+(defn merge-elements-map [m1 m2]
   (->> (set m1)
        (set/union (set m2))
        (reduce max-timestamp-reducer {})))
 
 
 (defn merge [s t]
-  {:a (merge-element-timestamp-map (:a s) (:a t))
-   :r (merge-element-timestamp-map (:r s) (:r t))})
+  {:a (merge-elements-map (:a s) (:a t))
+   :r (merge-elements-map (:r s) (:r t))})
